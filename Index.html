@@ -1,0 +1,175 @@
+DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIXEL DRIFT - Jogo de Carro 2D</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:'Courier New',monospace;color:white;overflow:hidden}
+  h1{font-size:28px;color:#ffe600;text-shadow:3px 3px 0 #ff0066;letter-spacing:2px;margin:10px}
+  #gameWrap{position:relative;border:4px solid #ffe600;box-shadow:0 0 30px #ff0066}
+  canvas{background:#2a2a2a;display:block;image-rendering:pixelated}
+  #hud{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;font-weight:bold;font-size:16px;text-shadow:2px 2px 0 #000}
+  #controls{margin-top:12px;text-align:center;line-height:1.6;font-size:14px;color:#ccc}
+  .btns{display:none;gap:10px;margin-top:10px}
+  .btn{width:60px;height:60px;background:#333;border:2px solid #ffe600;color:#ffe600;font-size:24px;border-radius:10px;touch-action:none}
+  @media(max-width:700px){.btns{display:flex} canvas{width:100vw!important;height:auto!important}}
+</style>
+</head>
+<body>
+<h1>🚗 PIXEL DRIFT 🚗</h1>
+<div id="gameWrap">
+  <canvas id="game" width="800" height="500"></canvas>
+  <div id="hud">
+    <div>🏆 PONTOS: <span id="score">0</span></div>
+    <div>🔥 DRIFT: <span id="drift">0</span></div>
+    <div>💨 VEL: <span id="speed">0</span> km/h</div>
+  </div>
+</div>
+<div id="controls">
+  <b>PC:</b> WASD / Setas = Dirigir | ESPAÇO = Freio de mão (DRIFT) | R = Reiniciar<br>
+  <b>CELULAR:</b> Use os botões abaixo
+</div>
+<div class="btns">
+  <button class="btn" id="left">⬅️</button>
+  <button class="btn" id="up">⬆️</button>
+  <button class="btn" id="down">⬇️</button>
+  <button class="btn" id="right">➡️</button>
+  <button class="btn" id="driftBtn">🔥</button>
+</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const driftEl = document.getElementById('drift');
+const speedEl = document.getElementById('speed');
+
+let keys = {};
+let score = 0, driftScore = 0, drifting = false;
+
+// Carro
+let car = { x:400, y:250, angle:0, speed:0, vx:0, vy:0, color:'#ff0066' };
+let particles = [];
+let coins = [];
+let cones = [];
+
+// Pista - cidade pixel
+let buildings = [];
+for(let i=0;i<20;i++){
+  buildings.push({x:Math.random()*760, y:Math.random()*460, w:40+Math.random()*50, h:40+Math.random()*50, c:['#3a3a5c','#4a2c5c','#2c4a5c'][i%3]});
+}
+for(let i=0;i<8;i++) coins.push({x:Math.random()*750+20, y:Math.random()*450+20, taken:false});
+for(let i=0;i<10;i++) cones.push({x:Math.random()*750+20, y:Math.random()*450+20});
+
+function drawPixelCar(){
+  ctx.save();
+  ctx.translate(car.x, car.y);
+  ctx.rotate(car.angle);
+  // Sombra
+  ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.fillRect(-18,-10,36,22);
+  // Corpo pixel
+  ctx.fillStyle=car.color;
+  ctx.fillRect(-18,-10,36,20);
+  ctx.fillRect(-12,-13,22,26); // cabine
+  ctx.fillStyle='#00e5ff'; ctx.fillRect(-6,-11,10,22); // vidro
+  ctx.fillStyle='#111'; ctx.fillRect(-10,-11,12,6);
+  // Rodas
+  ctx.fillStyle='#000';
+  ctx.fillRect(-14,-14,8,4); ctx.fillRect(-14,10,8,4);
+  ctx.fillRect(8,-14,8,4); ctx.fillRect(8,10,8,4);
+  // Farol
+  ctx.fillStyle='#ffe600'; ctx.fillRect(16,-7,3,3); ctx.fillRect(16,4,3,3);
+  ctx.restore();
+}
+
+function update(){
+  let accel = 0.25, maxSpeed = 6, friction = 0.97;
+  if(keys['w']||keys['arrowup']) car.speed += accel;
+  if(keys['s']||keys['arrowdown']) car.speed -= accel*0.8;
+  if(keys[' ']){ // drift
+    drifting = true;
+    car.speed *= 0.985;
+  } else drifting = false;
+
+  car.speed *= friction;
+  car.speed = Math.max(-3, Math.min(maxSpeed, car.speed));
+
+  let turn = 0.05;
+  if(drifting) turn = 0.09; // vira mais no drift
+
+  if(keys['a']||keys['arrowleft']) car.angle -= turn * (car.speed/3);
+  if(keys['d']||keys['arrowright']) car.angle += turn * (car.speed/3);
+
+  car.x += Math.cos(car.angle) * car.speed;
+  car.y += Math.sin(car.angle) * car.speed;
+
+  // Bate na parede e volta
+  if(car.x<20||car.x>780){car.angle=Math.PI-car.angle; car.speed*=0.5}
+  if(car.y<20||car.y>480){car.angle=-car.angle; car.speed*=0.5}
+
+  // Particulas de drift
+  if(drifting && Math.abs(car.speed)>2){
+    driftScore += 2; score += 2;
+    for(let i=0;i<3;i++) particles.push({x:car.x-Math.cos(car.angle)*14, y:car.y-Math.sin(car.angle)*14, life:20, c:'#fff'});
+  }
+  // Particulas de velocidade
+  if(Math.abs(car.speed)>4){
+    particles.push({x:car.x-Math.cos(car.angle)*18, y:car.y-Math.sin(car.angle)*18, life:12, c:'#ff6600'});
+  }
+
+  // Moedas
+  coins.forEach(c=>{
+    if(!c.taken && Math.hypot(car.x-c.x, car.y-c.y)<25){c.taken=true; score+=100; }
+  });
+
+  particles = particles.filter(p=>p.life-->0);
+  scoreEl.textContent = score;
+  driftEl.textContent = driftScore;
+  speedEl.textContent = Math.floor(Math.abs(car.speed)*30);
+}
+
+function draw(){
+  // Asfalto
+  ctx.fillStyle='#333'; ctx.fillRect(0,0,800,500);
+  // Faixas da rua
+  ctx.fillStyle='#ffe600';
+  for(let x=0;x<800;x+=60) ctx.fillRect(x,248,30,4);
+  for(let y=0;y<500;y+=60) ctx.fillRect(398,y,4,30);
+  // Predios pixel
+  buildings.forEach(b=>{
+    ctx.fillStyle=b.c; ctx.fillRect(b.x,b.y,b.w,b.h);
+    ctx.fillStyle='#ffe600';
+    for(let wx=b.x+5;wx<b.x+b.w-5;wx+=12) for(let wy=b.y+5;wy<b.y+b.h-5;wy+=12) ctx.fillRect(wx,wy,5,5);
+  });
+  // Moedas
+  coins.forEach(c=>{ if(!c.taken){ ctx.fillStyle='#ffe600'; ctx.beginPath(); ctx.arc(c.x,c.y,8,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillRect(c.x-2,c.y-5,4,10); }});
+  // Cones
+  cones.forEach(c=>{ ctx.fillStyle='#ff6600'; ctx.fillRect(c.x-5,c.y-5,10,10); ctx.fillStyle='#fff'; ctx.fillRect(c.x-5,c.y-2,10,3); });
+  // Particulas
+  particles.forEach(p=>{ ctx.fillStyle=p.c; ctx.globalAlpha=p.life/20; ctx.fillRect(p.x,p.y,5,5); ctx.globalAlpha=1; });
+  drawPixelCar();
+
+  if(drifting && Math.abs(car.speed)>2){
+    ctx.fillStyle='#ff0066'; ctx.font='bold 20px Courier'; ctx.fillText('DRIFT!!! 🔥', car.x-40, car.y-30);
+  }
+}
+
+function loop(){ update(); draw(); requestAnimationFrame(loop); }
+loop();
+
+// Teclado
+window.addEventListener('keydown', e=>{ keys[e.key.toLowerCase()]=true; if(e.key==='r') location.reload(); if(e.key===' ') e.preventDefault(); });
+window.addEventListener('keyup', e=>{ keys[e.key.toLowerCase()]=false; });
+
+// Botões celular
+function bind(id, key){
+  const el=document.getElementById(id);
+  el.addEventListener('touchstart', e=>{e.preventDefault(); keys[key]=true});
+  el.addEventListener('touchend', ()=>{keys[key]=false});
+}
+bind('left','a'); bind('right','d'); bind('up','w'); bind('down','s'); bind('driftBtn',' ');
+</script>
+</body>
+</html>
