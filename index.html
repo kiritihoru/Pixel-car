@@ -1,175 +1,91 @@
-DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PIXEL DRIFT - Jogo de Carro 2D</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PIXEL DRIFT - Corrida</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{background:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:'Courier New',monospace;color:white;overflow:hidden}
-  h1{font-size:28px;color:#ffe600;text-shadow:3px 3px 0 #ff0066;letter-spacing:2px;margin:10px}
-  #gameWrap{position:relative;border:4px solid #ffe600;box-shadow:0 0 30px #ff0066}
-  canvas{background:#2a2a2a;display:block;image-rendering:pixelated}
-  #hud{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;font-weight:bold;font-size:16px;text-shadow:2px 2px 0 #000}
-  #controls{margin-top:12px;text-align:center;line-height:1.6;font-size:14px;color:#ccc}
-  .btns{display:none;gap:10px;margin-top:10px}
-  .btn{width:60px;height:60px;background:#333;border:2px solid #ffe600;color:#ffe600;font-size:24px;border-radius:10px;touch-action:none}
-  @media(max-width:700px){.btns{display:flex} canvas{width:100vw!important;height:auto!important}}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:#111;color:#fff;font-family:monospace;overflow:hidden;touch-action:none}
+#top{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#000}
+#top h1{font-size:18px;color:#ffe600;text-shadow:2px 2px 0 #f00}
+button{font-family:monospace;font-weight:bold;cursor:pointer}
+#fullBtn{background:#ffe600;border:2px solid #fff;padding:8px 10px;border-radius:8px}
+#gameWrap{position:relative;width:100%;height:calc(100dvh - 52px);background:#222;display:flex;justify-content:center}
+canvas{background:#2e8b57;max-width:100%;height:100%;image-rendering:pixelated;border-left:4px solid #fff;border-right:4px solid #fff}
+#menu{position:absolute;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:15px;z-index:10}
+#menu h2{font-size:28px;color:#ffe600}
+#cars{display:flex;gap:10px}
+.carOpt{width:60px;height:90px;border:4px solid #555;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:30px;background:#333}
+.carOpt.sel{border-color:#ffe600;transform:scale(1.1)}
+#startBtn{background:#00e676;color:#000;font-size:20px;padding:14px 28px;border:3px solid #fff;border-radius:12px}
+#hud{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);padding:6px 12px;border-radius:10px;font-size:14px;white-space:nowrap;z-index:5}
+#controls{position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:space-between;padding:0 10px;z-index:5;pointer-events:none}
+#controls button{pointer-events:auto;width:64px;height:64px;border-radius:50%;border:3px solid #fff;font-size:26px;background:rgba(255,255,255,.9);color:#000}
+#controls button:active{background:#ffe600}
+#gas{background:#00e676 !important}
+#brake{background:#ff1744 !important;color:#fff !important}
+#msg{position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);font-size:26px;background:#000;padding:10px 18px;border:3px solid #ffe600;border-radius:12px;display:none;z-index:6}
 </style>
 </head>
 <body>
-<h1>🚗 PIXEL DRIFT 🚗</h1>
+<div id="top"><h1>🏁 PIXEL DRIFT 2.0</h1><button id="fullBtn" onclick="toggleFull()">⛶ TELA CHEIA</button></div>
 <div id="gameWrap">
-  <canvas id="game" width="800" height="500"></canvas>
-  <div id="hud">
-    <div>🏆 PONTOS: <span id="score">0</span></div>
-    <div>🔥 DRIFT: <span id="drift">0</span></div>
-    <div>💨 VEL: <span id="speed">0</span> km/h</div>
-  </div>
+<canvas id="game" width="360" height="520"></canvas>
+<div id="hud">POS: <span id="pos">4/4</span> | VOLTA: <span id="lap">1/3</span> | VEL: <span id="vel">0</span></div>
+<div id="msg"></div>
+<div id="menu">
+<h2>PIXEL DRIFT</h2>
+<p>Escolha seu carro:</p>
+<div id="cars">
+<div class="carOpt sel" data-c="0" data-color="#ff1744" onclick="pickCar(this)">🚗</div>
+<div class="carOpt" data-c="1" data-color="#2979ff" onclick="pickCar(this)">🚙</div>
+<div class="carOpt" data-c="2" data-color="#ffe600" onclick="pickCar(this)">🚕</div>
+<div class="carOpt" data-c="3" data-color="#00e676" onclick="pickCar(this)">🏎️</div>
+</div>
+<p>⬅️ ➡️ = Virar &nbsp; | &nbsp; 🟢 = Acelerar &nbsp; | &nbsp; 🔴 = Freio</p>
+<p>3 voltas! Ultrapasse todo mundo!</p>
+<button id="startBtn" onclick="startGame()">▶️ COMEÇAR CORRIDA</button>
 </div>
 <div id="controls">
-  <b>PC:</b> WASD / Setas = Dirigir | ESPAÇO = Freio de mão (DRIFT) | R = Reiniciar<br>
-  <b>CELULAR:</b> Use os botões abaixo
+<div style="display:flex;gap:10px"><button id="left">⬅️</button><button id="right">➡️</button></div>
+<div style="display:flex;gap:10px"><button id="brake">🔴</button><button id="gas">🟢</button></div>
 </div>
-<div class="btns">
-  <button class="btn" id="left">⬅️</button>
-  <button class="btn" id="up">⬆️</button>
-  <button class="btn" id="down">⬇️</button>
-  <button class="btn" id="right">➡️</button>
-  <button class="btn" id="driftBtn">🔥</button>
 </div>
-
 <script>
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const scoreEl = document.getElementById('score');
-const driftEl = document.getElementById('drift');
-const speedEl = document.getElementById('speed');
-
-let keys = {};
-let score = 0, driftScore = 0, drifting = false;
-
-// Carro
-let car = { x:400, y:250, angle:0, speed:0, vx:0, vy:0, color:'#ff0066' };
-let particles = [];
-let coins = [];
-let cones = [];
-
-// Pista - cidade pixel
-let buildings = [];
-for(let i=0;i<20;i++){
-  buildings.push({x:Math.random()*760, y:Math.random()*460, w:40+Math.random()*50, h:40+Math.random()*50, c:['#3a3a5c','#4a2c5c','#2c4a5c'][i%3]});
+let canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+let playerColor='#ff1744',playing=false,keys={};
+let player,opps=[],roadY=0,lap=1,totalLaps=3,finish=false,raceTime=0;
+function pickCar(el){document.querySelectorAll('.carOpt').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');playerColor=el.dataset.color;}
+function toggleFull(){if(!document.fullscreenElement){document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}else{document.exitFullscreen&&document.exitFullscreen();}}
+function startGame(){
+ playing=true;finish=false;lap=1;raceTime=0;roadY=0;
+ player={x:180,y:420,w:36,h:60,speed:0,color:playerColor,dist:0};
+ let colors=['#2979ff','#ffe600','#00e676','#ff6d00','#e040fb'];
+ opps=[];
+ for(let i=0;i<3;i++){opps.push({x:70+i*90,y:100+i*70,w:36,h:60,speed:3+Math.random()*1.5,color:colors[i],dist:100+i*50,change:0});}
+ document.getElementById('menu').style.display='none';
+ document.getElementById('msg').style.display='none';
 }
-for(let i=0;i<8;i++) coins.push({x:Math.random()*750+20, y:Math.random()*450+20, taken:false});
-for(let i=0;i<10;i++) cones.push({x:Math.random()*750+20, y:Math.random()*450+20});
-
-function drawPixelCar(){
-  ctx.save();
-  ctx.translate(car.x, car.y);
-  ctx.rotate(car.angle);
-  // Sombra
-  ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.fillRect(-18,-10,36,22);
-  // Corpo pixel
-  ctx.fillStyle=car.color;
-  ctx.fillRect(-18,-10,36,20);
-  ctx.fillRect(-12,-13,22,26); // cabine
-  ctx.fillStyle='#00e5ff'; ctx.fillRect(-6,-11,10,22); // vidro
-  ctx.fillStyle='#111'; ctx.fillRect(-10,-11,12,6);
-  // Rodas
-  ctx.fillStyle='#000';
-  ctx.fillRect(-14,-14,8,4); ctx.fillRect(-14,10,8,4);
-  ctx.fillRect(8,-14,8,4); ctx.fillRect(8,10,8,4);
-  // Farol
-  ctx.fillStyle='#ffe600'; ctx.fillRect(16,-7,3,3); ctx.fillRect(16,4,3,3);
-  ctx.restore();
+function drawCar(x,y,w,h,color,isPlayer){
+ ctx.fillStyle='#000';ctx.fillRect(x-3,y-3,w+6,h+6);
+ ctx.fillStyle=color;ctx.fillRect(x,y,w,h);
+ ctx.fillStyle='#111';ctx.fillRect(x+5,y+8,w-10,12);ctx.fillRect(x+5,y+35,w-10,12);
+ ctx.fillStyle='#fff';ctx.fillRect(x+4,y+2,w-8,4);
+ if(isPlayer){ctx.fillStyle='#fff';ctx.fillRect(x+w/2-2,y-8,4,8);}
 }
-
-function update(){
-  let accel = 0.25, maxSpeed = 6, friction = 0.97;
-  if(keys['w']||keys['arrowup']) car.speed += accel;
-  if(keys['s']||keys['arrowdown']) car.speed -= accel*0.8;
-  if(keys[' ']){ // drift
-    drifting = true;
-    car.speed *= 0.985;
-  } else drifting = false;
-
-  car.speed *= friction;
-  car.speed = Math.max(-3, Math.min(maxSpeed, car.speed));
-
-  let turn = 0.05;
-  if(drifting) turn = 0.09; // vira mais no drift
-
-  if(keys['a']||keys['arrowleft']) car.angle -= turn * (car.speed/3);
-  if(keys['d']||keys['arrowright']) car.angle += turn * (car.speed/3);
-
-  car.x += Math.cos(car.angle) * car.speed;
-  car.y += Math.sin(car.angle) * car.speed;
-
-  // Bate na parede e volta
-  if(car.x<20||car.x>780){car.angle=Math.PI-car.angle; car.speed*=0.5}
-  if(car.y<20||car.y>480){car.angle=-car.angle; car.speed*=0.5}
-
-  // Particulas de drift
-  if(drifting && Math.abs(car.speed)>2){
-    driftScore += 2; score += 2;
-    for(let i=0;i<3;i++) particles.push({x:car.x-Math.cos(car.angle)*14, y:car.y-Math.sin(car.angle)*14, life:20, c:'#fff'});
-  }
-  // Particulas de velocidade
-  if(Math.abs(car.speed)>4){
-    particles.push({x:car.x-Math.cos(car.angle)*18, y:car.y-Math.sin(car.angle)*18, life:12, c:'#ff6600'});
-  }
-
-  // Moedas
-  coins.forEach(c=>{
-    if(!c.taken && Math.hypot(car.x-c.x, car.y-c.y)<25){c.taken=true; score+=100; }
-  });
-
-  particles = particles.filter(p=>p.life-->0);
-  scoreEl.textContent = score;
-  driftEl.textContent = driftScore;
-  speedEl.textContent = Math.floor(Math.abs(car.speed)*30);
-}
-
-function draw(){
-  // Asfalto
-  ctx.fillStyle='#333'; ctx.fillRect(0,0,800,500);
-  // Faixas da rua
-  ctx.fillStyle='#ffe600';
-  for(let x=0;x<800;x+=60) ctx.fillRect(x,248,30,4);
-  for(let y=0;y<500;y+=60) ctx.fillRect(398,y,4,30);
-  // Predios pixel
-  buildings.forEach(b=>{
-    ctx.fillStyle=b.c; ctx.fillRect(b.x,b.y,b.w,b.h);
-    ctx.fillStyle='#ffe600';
-    for(let wx=b.x+5;wx<b.x+b.w-5;wx+=12) for(let wy=b.y+5;wy<b.y+b.h-5;wy+=12) ctx.fillRect(wx,wy,5,5);
-  });
-  // Moedas
-  coins.forEach(c=>{ if(!c.taken){ ctx.fillStyle='#ffe600'; ctx.beginPath(); ctx.arc(c.x,c.y,8,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillRect(c.x-2,c.y-5,4,10); }});
-  // Cones
-  cones.forEach(c=>{ ctx.fillStyle='#ff6600'; ctx.fillRect(c.x-5,c.y-5,10,10); ctx.fillStyle='#fff'; ctx.fillRect(c.x-5,c.y-2,10,3); });
-  // Particulas
-  particles.forEach(p=>{ ctx.fillStyle=p.c; ctx.globalAlpha=p.life/20; ctx.fillRect(p.x,p.y,5,5); ctx.globalAlpha=1; });
-  drawPixelCar();
-
-  if(drifting && Math.abs(car.speed)>2){
-    ctx.fillStyle='#ff0066'; ctx.font='bold 20px Courier'; ctx.fillText('DRIFT!!! 🔥', car.x-40, car.y-30);
-  }
-}
-
-function loop(){ update(); draw(); requestAnimationFrame(loop); }
-loop();
-
-// Teclado
-window.addEventListener('keydown', e=>{ keys[e.key.toLowerCase()]=true; if(e.key==='r') location.reload(); if(e.key===' ') e.preventDefault(); });
-window.addEventListener('keyup', e=>{ keys[e.key.toLowerCase()]=false; });
-
-// Botões celular
-function bind(id, key){
-  const el=document.getElementById(id);
-  el.addEventListener('touchstart', e=>{e.preventDefault(); keys[key]=true});
-  el.addEventListener('touchend', ()=>{keys[key]=false});
-}
-bind('left','a'); bind('right','d'); bind('up','w'); bind('down','s'); bind('driftBtn',' ');
-</script>
-</body>
-</html>
+function loop(){
+ requestAnimationFrame(loop);
+ ctx.fillStyle='#2e8b57';ctx.fillRect(0,0,360,520);
+ ctx.fillStyle='#333';ctx.fillRect(30,0,300,520);
+ ctx.fillStyle='#fff';
+ roadY=(roadY+player.speed)%40;
+ for(let i=-1;i<14;i++){ctx.fillRect(175, i*40+roadY, 6, 20);}
+ ctx.fillStyle='#ffe600';ctx.fillRect(30,0,6,520);ctx.fillRect(324,0,6,520);
+ if(!playing){ctx.fillStyle='#fff';ctx.font='bold 16px monospace';ctx.fillText('ESCOLHA SEU CARRO',70,260);return;}
+ raceTime++;
+ player.dist+=player.speed;
+ if(keys['gas']||keys['ArrowUp']) player.speed=Math.min(9,player.speed+0.12);
+ else if(keys['brake']||keys['ArrowDown']) player.speed=Math.max(0,player.speed-0.25);
+ else player.speed=Math.max(2,player.speed-0.03);
+ if(keys['left']||keys['ArrowLeft']) player.x-=5+player.speed*0.4
