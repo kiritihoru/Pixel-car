@@ -5,31 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>PIXEL DRIFT - Corrida</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{background:#111;color:#fff;font-family:monospace;overflow:hidden;touch-action:none}
-#top{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#000}
-#top h1{font-size:18px;color:#ffe600;text-shadow:2px 2px 0 #f00}
-button{font-family:monospace;font-weight:bold;cursor:pointer}
-#fullBtn{background:#ffe600;border:2px solid #fff;padding:8px 10px;border-radius:8px}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+body{background:#111;color:#fff;font-family:monospace;overflow:hidden}
+#top{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#000;position:relative;z-index:200}
+#top h1{font-size:18px;color:#ffe600}
+#fullBtn{background:#ffe600;border:2px solid #fff;padding:10px 12px;border-radius:8px;font-weight:bold;font-size:14px}
 #gameWrap{position:relative;width:100%;height:calc(100dvh - 52px);background:#222;display:flex;justify-content:center}
-canvas{background:#2e8b57;max-width:100%;height:100%;image-rendering:pixelated;border-left:4px solid #fff;border-right:4px solid #fff}
-#menu{position:absolute;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:15px;z-index:10}
-#menu h2{font-size:28px;color:#ffe600}
+canvas{background:#2e8b57;max-width:100%;height:100%;border-left:4px solid #fff;border-right:4px solid #fff}
+#hud{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);padding:6px 12px;border-radius:10px;font-size:14px;white-space:nowrap;z-index:50}
+#menu{position:absolute;inset:0;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:15px;z-index:100}
+#menu h2{font-size:30px;color:#ffe600}
 #cars{display:flex;gap:10px}
-.carOpt{width:60px;height:90px;border:4px solid #555;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:30px;background:#333}
-.carOpt.sel{border-color:#ffe600;transform:scale(1.1)}
-#startBtn{background:#00e676;color:#000;font-size:20px;padding:14px 28px;border:3px solid #fff;border-radius:12px}
-#hud{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);padding:6px 12px;border-radius:10px;font-size:14px;white-space:nowrap;z-index:5}
-#controls{position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:space-between;padding:0 10px;z-index:5;pointer-events:none}
-#controls button{pointer-events:auto;width:64px;height:64px;border-radius:50%;border:3px solid #fff;font-size:26px;background:rgba(255,255,255,.9);color:#000}
-#controls button:active{background:#ffe600}
+.carOpt{width:64px;height:92px;border:4px solid #555;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:32px;background:#333}
+.carOpt.sel{border-color:#ffe600;transform:scale(1.1);background:#444}
+#startBtn{background:#00e676;color:#000;font-size:21px;padding:16px 30px;border:3px solid #fff;border-radius:12px;font-weight:bold}
+#controls{position:absolute;bottom:12px;left:0;right:0;display:none;justify-content:space-between;padding:0 10px;z-index:60}
+#controls button{width:70px;height:70px;border-radius:50%;border:3px solid #fff;font-size:28px;background:rgba(255,255,255,.95);color:#000}
 #gas{background:#00e676 !important}
-#brake{background:#ff1744 !important;color:#fff !important}
-#msg{position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);font-size:26px;background:#000;padding:10px 18px;border:3px solid #ffe600;border-radius:12px;display:none;z-index:6}
+#brake{background:#ff1744 !important}
+#msg{position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);font-size:24px;background:#000;padding:12px 18px;border:3px solid #ffe600;border-radius:12px;display:none;z-index:90;text-align:center}
 </style>
 </head>
 <body>
-<div id="top"><h1>🏁 PIXEL DRIFT 2.0</h1><button id="fullBtn" onclick="toggleFull()">⛶ TELA CHEIA</button></div>
+<div id="top"><h1>🏁 PIXEL DRIFT 2.0</h1><button id="fullBtn">⛶ TELA CHEIA</button></div>
 <div id="gameWrap">
 <canvas id="game" width="360" height="520"></canvas>
 <div id="hud">POS: <span id="pos">4/4</span> | VOLTA: <span id="lap">1/3</span> | VEL: <span id="vel">0</span></div>
@@ -38,14 +36,15 @@ canvas{background:#2e8b57;max-width:100%;height:100%;image-rendering:pixelated;b
 <h2>PIXEL DRIFT</h2>
 <p>Escolha seu carro:</p>
 <div id="cars">
-<div class="carOpt sel" data-c="0" data-color="#ff1744" onclick="pickCar(this)">🚗</div>
-<div class="carOpt" data-c="1" data-color="#2979ff" onclick="pickCar(this)">🚙</div>
-<div class="carOpt" data-c="2" data-color="#ffe600" onclick="pickCar(this)">🚕</div>
-<div class="carOpt" data-c="3" data-color="#00e676" onclick="pickCar(this)">🏎️</div>
+<div class="carOpt sel" data-color="#ff1744">🚗</div>
+<div class="carOpt" data-color="#2979ff">🚙</div>
+<div class="carOpt" data-color="#ffe600">🚕</div>
+<div class="carOpt" data-color="#00e676">🏎️</div>
 </div>
-<p>⬅️ ➡️ = Virar &nbsp; | &nbsp; 🟢 = Acelerar &nbsp; | &nbsp; 🔴 = Freio</p>
+<p>⬅️ ➡️ Virar | 🟢 Acelerar | 🔴 Freio</p>
 <p>3 voltas! Ultrapasse todo mundo!</p>
-<button id="startBtn" onclick="startGame()">▶️ COMEÇAR CORRIDA</button>
+<button id="startBtn">▶️ COMEÇAR CORRIDA</button>
+<p id="dica" style="font-size:12px;opacity:.7">Toque no carro e no botão verde</p>
 </div>
 <div id="controls">
 <div style="display:flex;gap:10px"><button id="left">⬅️</button><button id="right">➡️</button></div>
@@ -55,37 +54,95 @@ canvas{background:#2e8b57;max-width:100%;height:100%;image-rendering:pixelated;b
 <script>
 let canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 let playerColor='#ff1744',playing=false,keys={};
-let player,opps=[],roadY=0,lap=1,totalLaps=3,finish=false,raceTime=0;
-function pickCar(el){document.querySelectorAll('.carOpt').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');playerColor=el.dataset.color;}
-function toggleFull(){if(!document.fullscreenElement){document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}else{document.exitFullscreen&&document.exitFullscreen();}}
+let player,opps=[],roadY=0,lap=1,finish=false,raceTime=0;
+document.querySelectorAll('.carOpt').forEach(c=>{
+  let fn=(e)=>{e.preventDefault();document.querySelectorAll('.carOpt').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');playerColor=c.dataset.color;};
+  c.addEventListener('touchstart',fn,{passive:false});
+  c.addEventListener('click',fn);
+});
+document.getElementById('fullBtn').addEventListener('click',()=>{
+  if(!document.fullscreenElement){document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}
+  else{document.exitFullscreen&&document.exitFullscreen();}
+});
 function startGame(){
  playing=true;finish=false;lap=1;raceTime=0;roadY=0;
  player={x:180,y:420,w:36,h:60,speed:0,color:playerColor,dist:0};
- let colors=['#2979ff','#ffe600','#00e676','#ff6d00','#e040fb'];
+ let colors=['#2979ff','#ffe600','#00e676','#ff6d00'];
  opps=[];
- for(let i=0;i<3;i++){opps.push({x:70+i*90,y:100+i*70,w:36,h:60,speed:3+Math.random()*1.5,color:colors[i],dist:100+i*50,change:0});}
+ for(let i=0;i<3;i++){opps.push({x:70+i*90,y:100+i*70,w:36,h:60,speed:3+Math.random()*1.5,color:colors[i],dist:100+i*50,targetX:70+i*90});}
  document.getElementById('menu').style.display='none';
+ document.getElementById('controls').style.display='flex';
  document.getElementById('msg').style.display='none';
 }
-function drawCar(x,y,w,h,color,isPlayer){
+document.getElementById('startBtn').addEventListener('touchstart',(e)=>{e.preventDefault();startGame();},{passive:false});
+document.getElementById('startBtn').addEventListener('click',startGame);
+function drawCar(x,y,w,h,color){
  ctx.fillStyle='#000';ctx.fillRect(x-3,y-3,w+6,h+6);
  ctx.fillStyle=color;ctx.fillRect(x,y,w,h);
  ctx.fillStyle='#111';ctx.fillRect(x+5,y+8,w-10,12);ctx.fillRect(x+5,y+35,w-10,12);
  ctx.fillStyle='#fff';ctx.fillRect(x+4,y+2,w-8,4);
- if(isPlayer){ctx.fillStyle='#fff';ctx.fillRect(x+w/2-2,y-8,4,8);}
 }
 function loop(){
  requestAnimationFrame(loop);
  ctx.fillStyle='#2e8b57';ctx.fillRect(0,0,360,520);
  ctx.fillStyle='#333';ctx.fillRect(30,0,300,520);
  ctx.fillStyle='#fff';
- roadY=(roadY+player.speed)%40;
- for(let i=-1;i<14;i++){ctx.fillRect(175, i*40+roadY, 6, 20);}
+ roadY=(roadY+(playing?player.speed:0))%40;
+ for(let i=-1;i<14;i++){ctx.fillRect(175,i*40+roadY,6,20);}
  ctx.fillStyle='#ffe600';ctx.fillRect(30,0,6,520);ctx.fillRect(324,0,6,520);
- if(!playing){ctx.fillStyle='#fff';ctx.font='bold 16px monospace';ctx.fillText('ESCOLHA SEU CARRO',70,260);return;}
+ if(!playing) return;
  raceTime++;
  player.dist+=player.speed;
- if(keys['gas']||keys['ArrowUp']) player.speed=Math.min(9,player.speed+0.12);
- else if(keys['brake']||keys['ArrowDown']) player.speed=Math.max(0,player.speed-0.25);
+ if(keys['gas']) player.speed=Math.min(9,player.speed+0.12);
+ else if(keys['brake']) player.speed=Math.max(0,player.speed-0.25);
  else player.speed=Math.max(2,player.speed-0.03);
- if(keys['left']||keys['ArrowLeft']) player.x-=5+player.speed*0.4
+ if(keys['left']) player.x-=5+player.speed*0.4;
+ if(keys['right']) player.x+=5+player.speed*0.4;
+ player.x=Math.max(38,Math.min(286,player.x));
+ opps.forEach(o=>{
+   o.dist+=o.speed;
+   if(Math.random()<0.01) o.targetX=50+Math.random()*230;
+   o.x+=(o.targetX-o.x)*0.02;
+   o.speed=3+Math.sin(raceTime/200+o.dist/500)*1.2;
+   o.y=player.y-(o.dist-player.dist)*0.6;
+   if(o.y>560) o.y=-80;
+   if(o.y<-100) o.y=540;
+ });
+ if(player.dist>1200){player.dist=0;opps.forEach(o=>o.dist-=1200);lap++; if(lap>3){finishRace();}}
+ let all=[{dist:player.dist,isMe:true},...opps.map(o=>({dist:o.dist,isMe:false}))];
+ all.sort((a,b)=>b.dist-a.dist);
+ let myPos=all.findIndex(a=>a.isMe)+1;
+ document.getElementById('pos').textContent=myPos+'/4';
+ document.getElementById('lap').textContent=lap+'/3';
+ document.getElementById('vel').textContent=Math.round(player.speed*18);
+ opps.forEach(o=>drawCar(o.x,o.y,o.w,o.h,o.color));
+ drawCar(player.x,player.y,player.w,player.h,player.color);
+}
+function finishRace(){
+ playing=false;
+ let all=[player,...opps].sort((a,b)=>b.dist-a.dist);
+ let myPos=all.indexOf(player)+1;
+ let msg=document.getElementById('msg');
+ msg.style.display='block';
+ msg.innerHTML=myPos===1?'🏆 VOCÊ VENCEU!':'🏁 Você ficou em '+myPos+'º lugar!';
+ document.getElementById('controls').style.display='none';
+ setTimeout(()=>{document.getElementById('menu').style.display='flex';document.querySelector('#menu h2').textContent=myPos===1?'VOCÊ VENCEU!':'FIM DA CORRIDA';},2500);
+}
+function bindBtn(id,key){
+ let b=document.getElementById(id);
+ let on=e=>{e.preventDefault();keys[key]=true;};
+ let off=e=>{e.preventDefault();keys[key]=false;};
+ b.addEventListener('touchstart',on,{passive:false});
+ b.addEventListener('touchend',off);
+ b.addEventListener('touchcancel',off);
+ b.addEventListener('mousedown',on);
+ b.addEventListener('mouseup',off);
+ b.addEventListener('mouseleave',off);
+}
+bindBtn('left','left');bindBtn('right','right');bindBtn('gas','gas');bindBtn('brake','brake');
+document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')keys['left']=true;if(e.key==='ArrowRight')keys['right']=true;if(e.key==='ArrowUp')keys['gas']=true;if(e.key==='ArrowDown')keys['brake']=true;});
+document.addEventListener('keyup',e=>{if(e.key==='ArrowLeft')keys['left']=false;if(e.key==='ArrowRight')keys['right']=false;if(e.key==='ArrowUp')keys['gas']=false;if(e.key==='ArrowDown')keys['brake']=false;});
+loop();
+</script>
+</body>
+</html>
