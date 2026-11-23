@@ -3,146 +3,220 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PIXEL DRIFT - Corrida</title>
+<title>PIXEL PES 2014</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 body{background:#111;color:#fff;font-family:monospace;overflow:hidden}
-#top{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#000;position:relative;z-index:200}
-#top h1{font-size:18px;color:#ffe600}
-#fullBtn{background:#ffe600;border:2px solid #fff;padding:10px 12px;border-radius:8px;font-weight:bold;font-size:14px}
+#top{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#000}
+#top h1{font-size:16px;color:#ffe600}
+#placar{background:#222;padding:6px 10px;border:2px solid #ffe600;border-radius:8px;font-size:16px;font-weight:bold}
 #gameWrap{position:relative;width:100%;height:calc(100dvh - 52px);background:#222;display:flex;justify-content:center}
-canvas{background:#2e8b57;max-width:100%;height:100%;border-left:4px solid #fff;border-right:4px solid #fff}
-#hud{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);padding:6px 12px;border-radius:10px;font-size:14px;white-space:nowrap;z-index:50}
-#menu{position:absolute;inset:0;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:15px;z-index:100}
-#menu h2{font-size:30px;color:#ffe600}
-#cars{display:flex;gap:10px}
-.carOpt{width:64px;height:92px;border:4px solid #555;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:32px;background:#333}
-.carOpt.sel{border-color:#ffe600;transform:scale(1.1);background:#444}
+canvas{background:#2e8b57;max-width:100%;height:100%}
+#menu{position:absolute;inset:0;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:15px;z-index:100}
+#menu h2{font-size:32px;color:#ffe600}
+#menu p{font-size:14px}
+.team{padding:10px 18px;border:3px solid #555;border-radius:10px;font-size:18px;background:#333}
+.team.sel{border-color:#ffe600;background:#444;transform:scale(1.05)}
 #startBtn{background:#00e676;color:#000;font-size:21px;padding:16px 30px;border:3px solid #fff;border-radius:12px;font-weight:bold}
-#controls{position:absolute;bottom:12px;left:0;right:0;display:none;justify-content:space-between;padding:0 10px;z-index:60}
-#controls button{width:70px;height:70px;border-radius:50%;border:3px solid #fff;font-size:28px;background:rgba(255,255,255,.95);color:#000}
-#gas{background:#00e676 !important}
-#brake{background:#ff1744 !important}
-#msg{position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);font-size:24px;background:#000;padding:12px 18px;border:3px solid #ffe600;border-radius:12px;display:none;z-index:90;text-align:center}
+#controls{position:absolute;bottom:12px;left:0;right:0;display:none;justify-content:space-between;padding:0 10px;z-index:60;align-items:end}
+#dpad{display:grid;grid-template-columns:40px 40px 40px;gap:4px}
+#dpad button{width:44px;height:44px;border-radius:10px;border:2px solid #fff;background:rgba(255,255,255,.9);font-size:20px}
+#dpad .empty{background:transparent;border:none}
+#btns{display:flex;gap:8px;flex-direction:column;align-items:end}
+#btns button{border-radius:50%;border:3px solid #fff;font-weight:bold;color:#fff}
+#passBtn{width:70px;height:70px;background:#2979ff;font-size:14px}
+#shootBtn{width:84px;height:84px;background:#ff1744;font-size:16px}
+#runBtn{width:60px;height:60px;background:#ffe600;color:#000;font-size:12px}
+#msg{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);font-size:28px;background:#000;padding:14px 20px;border:3px solid #ffe600;border-radius:12px;display:none;z-index:90;text-align:center}
+#msg small{font-size:14px;display:block}
 </style>
 </head>
 <body>
-<div id="top"><h1>🏁 PIXEL DRIFT 2.0</h1><button id="fullBtn">⛶ TELA CHEIA</button></div>
+<div id="top"><h1>⚽ PIXEL PES 2014</h1><div id="placar">BRA 0 x 0 ARG | 00:00</div></div>
 <div id="gameWrap">
-<canvas id="game" width="360" height="520"></canvas>
-<div id="hud">POS: <span id="pos">4/4</span> | VOLTA: <span id="lap">1/3</span> | VEL: <span id="vel">0</span></div>
+<canvas id="game" width="360" height="560"></canvas>
 <div id="msg"></div>
 <div id="menu">
-<h2>PIXEL DRIFT</h2>
-<p>Escolha seu carro:</p>
-<div id="cars">
-<div class="carOpt sel" data-color="#ff1744">🚗</div>
-<div class="carOpt" data-color="#2979ff">🚙</div>
-<div class="carOpt" data-color="#ffe600">🚕</div>
-<div class="carOpt" data-color="#00e676">🏎️</div>
+<h2>PIXEL PES</h2>
+<p>Escolha seu time:</p>
+<div style="display:flex;gap:10px">
+<div class="team sel" data-c1="#ffe600" data-c2="#00e676">🇧🇷 BRASIL</div>
+<div class="team" data-c1="#ff1744" data-c2="#2979ff">🇫🇷 FRANÇA</div>
 </div>
-<p>⬅️ ➡️ Virar | 🟢 Acelerar | 🔴 Freio</p>
-<p>3 voltas! Ultrapasse todo mundo!</p>
-<button id="startBtn">▶️ COMEÇAR CORRIDA</button>
-<p id="dica" style="font-size:12px;opacity:.7">Toque no carro e no botão verde</p>
+<div style="display:flex;gap:10px">
+<div class="team" data-c1="#fff" data-c2="#ff1744">🏴 INGLATERRA</div>
+<div class="team" data-c1="#87ceeb" data-c2="#fff">🇦🇷 ARGENTINA</div>
+</div>
+<p>⬅️➡️⬆️⬇️ Mover | 🔵 Passar | 🔴 Chutar | 🟡 Correr</p>
+<p>Partida de 2 minutos! Faça mais gols!</p>
+<button id="startBtn">▶️ APITAR INÍCIO</button>
 </div>
 <div id="controls">
-<div style="display:flex;gap:10px"><button id="left">⬅️</button><button id="right">➡️</button></div>
-<div style="display:flex;gap:10px"><button id="brake">🔴</button><button id="gas">🟢</button></div>
+<div id="dpad">
+<button class="empty"></button><button data-k="up">⬆️</button><button class="empty"></button>
+<button data-k="left">⬅️</button><button data-k="down">⬇️</button><button data-k="right">➡️</button>
+</div>
+<div id="btns"><button id="shootBtn">CHUTAR</button><div style="display:flex;gap:8px"><button id="passBtn">PASSAR</button><button id="runBtn">CORRER</button></div></div>
 </div>
 </div>
 <script>
 let canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
-let playerColor='#ff1744',playing=false,keys={};
-let player,opps=[],roadY=0,lap=1,finish=false,raceTime=0;
-document.querySelectorAll('.carOpt').forEach(c=>{
-  let fn=(e)=>{e.preventDefault();document.querySelectorAll('.carOpt').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');playerColor=c.dataset.color;};
-  c.addEventListener('touchstart',fn,{passive:false});
-  c.addEventListener('click',fn);
+let keys={},playing=false,myColor='#ffe600',myColor2='#00e676',oppColor='#87ceeb',oppColor2='#fff';
+let players=[],ball={x:180,y:280,vx:0,vy:0,owner:null},scoreA=0,scoreB=0,timeLeft=120,goalTimer=0,lastScorer='';
+document.querySelectorAll('.team').forEach(t=>{
+ t.addEventListener('click',()=>{document.querySelectorAll('.team').forEach(x=>x.classList.remove('sel'));t.classList.add('sel');myColor=t.dataset.c1;myColor2=t.dataset.c2;});
 });
-document.getElementById('fullBtn').addEventListener('click',()=>{
-  if(!document.fullscreenElement){document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}
-  else{document.exitFullscreen&&document.exitFullscreen();}
-});
+function makeTeams(){
+ players=[];
+ let formA=[[180,500],[80,410],[280,410],[100,310],[260,310]];
+ let formB=[[180,60],[80,150],[280,150],[100,250],[260,250]];
+ formA.forEach((p,i)=>players.push({x:p[0],y:p[1],team:'A',isGK:i==0,role:i,home:{x:p[0],y:p[1]},speed:2.2}));
+ formB.forEach((p,i)=>players.push({x:p[0],y:p[1],team:'B',isGK:i==0,role:i,home:{x:p[0],y:p[1]},speed:2}));
+ ball={x:180,y:280,vx:0,vy:0,owner:null};
+}
 function startGame(){
- playing=true;finish=false;lap=1;raceTime=0;roadY=0;
- player={x:180,y:420,w:36,h:60,speed:0,color:playerColor,dist:0};
- let colors=['#2979ff','#ffe600','#00e676','#ff6d00'];
- opps=[];
- for(let i=0;i<3;i++){opps.push({x:70+i*90,y:100+i*70,w:36,h:60,speed:3+Math.random()*1.5,color:colors[i],dist:100+i*50,targetX:70+i*90});}
+ makeTeams();scoreA=0;scoreB=0;timeLeft=120;playing=true;
  document.getElementById('menu').style.display='none';
  document.getElementById('controls').style.display='flex';
  document.getElementById('msg').style.display='none';
 }
-document.getElementById('startBtn').addEventListener('touchstart',(e)=>{e.preventDefault();startGame();},{passive:false});
 document.getElementById('startBtn').addEventListener('click',startGame);
-function drawCar(x,y,w,h,color){
- ctx.fillStyle='#000';ctx.fillRect(x-3,y-3,w+6,h+6);
- ctx.fillStyle=color;ctx.fillRect(x,y,w,h);
- ctx.fillStyle='#111';ctx.fillRect(x+5,y+8,w-10,12);ctx.fillRect(x+5,y+35,w-10,12);
- ctx.fillStyle='#fff';ctx.fillRect(x+4,y+2,w-8,4);
+function getClosest(team){
+ let best=null,bd=1e9;
+ players.filter(p=>p.team==team).forEach(p=>{let d=Math.hypot(p.x-ball.x,p.y-ball.y);if(d<bd){bd=d;best=p}});
+ return best;
+}
+function showGoal(txt){
+ let m=document.getElementById('msg');m.style.display='block';m.innerHTML='⚽ GOOOOL!<br><small>'+txt+'</small>';playing=false;
+ setTimeout(()=>{m.style.display='none';makeTeams();playing=true;},2200);
 }
 function loop(){
  requestAnimationFrame(loop);
- ctx.fillStyle='#2e8b57';ctx.fillRect(0,0,360,520);
- ctx.fillStyle='#333';ctx.fillRect(30,0,300,520);
- ctx.fillStyle='#fff';
- roadY=(roadY+(playing?player.speed:0))%40;
- for(let i=-1;i<14;i++){ctx.fillRect(175,i*40+roadY,6,20);}
- ctx.fillStyle='#ffe600';ctx.fillRect(30,0,6,520);ctx.fillRect(324,0,6,520);
- if(!playing) return;
- raceTime++;
- player.dist+=player.speed;
- if(keys['gas']) player.speed=Math.min(9,player.speed+0.12);
- else if(keys['brake']) player.speed=Math.max(0,player.speed-0.25);
- else player.speed=Math.max(2,player.speed-0.03);
- if(keys['left']) player.x-=5+player.speed*0.4;
- if(keys['right']) player.x+=5+player.speed*0.4;
- player.x=Math.max(38,Math.min(286,player.x));
- opps.forEach(o=>{
-   o.dist+=o.speed;
-   if(Math.random()<0.01) o.targetX=50+Math.random()*230;
-   o.x+=(o.targetX-o.x)*0.02;
-   o.speed=3+Math.sin(raceTime/200+o.dist/500)*1.2;
-   o.y=player.y-(o.dist-player.dist)*0.6;
-   if(o.y>560) o.y=-80;
-   if(o.y<-100) o.y=540;
+ // campo
+ ctx.fillStyle='#2e8b57';ctx.fillRect(0,0,360,560);
+ ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=2;
+ ctx.strokeRect(20,20,320,520);
+ ctx.beginPath();ctx.moveTo(20,280);ctx.lineTo(340,280);ctx.stroke();
+ ctx.beginPath();ctx.arc(180,280,50,0,Math.PI*2);ctx.stroke();
+ ctx.fillStyle='#fff';ctx.fillRect(110,0,140,30);ctx.fillStyle='#000';ctx.fillRect(115,0,130,8);
+ ctx.fillStyle='#fff';ctx.fillRect(110,530,140,30);ctx.fillStyle='#000';ctx.fillRect(115,552,130,8);
+ ctx.strokeRect(70,0,220,70);ctx.strokeRect(70,490,220,70);
+ if(playing) timeLeft-=1/60;
+ if(timeLeft<=0 && playing){
+   playing=false;document.getElementById('controls').style.display='none';
+   let m=document.getElementById('msg');m.style.display='block';
+   let res=scoreA>scoreB?'🏆 VOCÊ VENCEU!':scoreA<scoreB?'😢 VOCÊ PERDEU':'🤝 EMPATE';
+   m.innerHTML=res+'<br><small>BRA '+scoreA+' x '+scoreB+' ARG<br>Toque para jogar de novo</small>';
+   m.onclick=()=>{m.style.display='none';document.getElementById('menu').style.display='flex';};
+   return;
+ }
+ if(!playing && document.getElementById('menu').style.display=='none' && timeLeft>0){
+   // ainda desenha campo parado
+ }
+ // logica
+ if(playing){
+   let me=getClosest('A');
+   let opp=getClosest('B');
+   // jogador controlado = mais perto da bola do time A
+   let ctrl=me;
+   let spd=keys['run']?3.8:2.6;
+   if(keys['up']) ctrl.y-=spd; if(keys['down']) ctrl.y+=spd; if(keys['left']) ctrl.x-=spd; if(keys['right']) ctrl.x+=spd;
+   // outros do time A voltam pra posição e ajudam
+   players.forEach(p=>{
+     if(p===ctrl) return;
+     if(p.team=='A'){
+       if(p.isGK){p.x+=(180-p.x)*0.05;p.y+=(ball.y<280?70:490)*0.02;p.y=Math.max(15,Math.min(545,p.y));}
+       else{
+         let tx=p.home.x+(ball.x-180)*0.25, ty=p.home.y+(ball.y-280)*0.25;
+         p.x+=(tx-p.x)*0.02; p.y+=(ty-p.y)*0.02;
+       }
+     } else {
+       if(p.isGK){p.x+=(180-p.x)*0.06;p.y+=((ball.y<280?70:490)-p.y)*0.05;}
+       else{
+         // IA adversaria persegue bola
+         let dx=ball.x-p.x, dy=ball.y-p.y, d=Math.hypot(dx,dy)||1;
+         if(d<180){p.x+=dx/d*2.1;p.y+=dy/d*2.1;}
+         else{p.x+=(p.home.x-p.x)*0.02;p.y+=(p.home.y-p.y)*0.02;}
+       }
+     }
+     p.x=Math.max(20,Math.min(340,p.x)); p.y=Math.max(15,Math.min(545,p.y));
+   });
+   ctrl.x=Math.max(20,Math.min(340,ctrl.x)); ctrl.y=Math.max(15,Math.min(545,ctrl.y));
+   // bola
+   if(ball.owner){
+     ball.x=ball.owner.x; ball.y=ball.owner.y+ (ball.owner.team=='A'?12:-12);
+     // se adversario tem bola, ele chuta pra frente
+     if(ball.owner.team=='B' && Math.random()<0.008){
+       ball.owner=null; ball.vx=(Math.random()-0.5)*6; ball.vy=8;
+     }
+   } else {
+     ball.x+=ball.vx; ball.y+=ball.vy; ball.vx*=0.96; ball.vy*=0.96;
+     if(ball.x<20||ball.x>340){ball.vx*=-1;ball.x=Math.max(20,Math.min(340,ball.x));}
+     if(ball.y<20||ball.y>540){ball.vy*=-1;ball.y=Math.max(20,Math.min(540,ball.y));}
+     // pegar bola
+     players.forEach(p=>{if(Math.hypot(p.x-ball.x,p.y-ball.y)<16 && Math.hypot(ball.vx,ball.vy)<5) ball.owner=p;});
+   }
+   // gol
+   if(ball.y<12 && ball.x>115 && ball.x<245){scoreA++;showGoal('Brasil marcou!');}
+   if(ball.y>548 && ball.x>115 && ball.x<245){scoreB++;showGoal('Adversário marcou!');}
+ }
+ // desenhar jogadores
+ players.forEach(p=>{
+   let isCtrl = playing && p===getClosest('A') && p.team=='A';
+   ctx.fillStyle='#000';ctx.fillRect(p.x-9,p.y-9,18,18);
+   ctx.fillStyle=p.team=='A'?myColor:oppColor;ctx.fillRect(p.x-8,p.y-8,16,16);
+   ctx.fillStyle=p.team=='A'?myColor2:oppColor2;ctx.fillRect(p.x-8,p.y-2,16,6);
+   if(isCtrl){ctx.strokeStyle='#ffe600';ctx.lineWidth=3;ctx.beginPath();ctx.arc(p.x,p.y,14,0,Math.PI*2);ctx.stroke();}
+   if(p.isGK){ctx.fillStyle='#ff0';ctx.font='10px monospace';ctx.fillText('GK',p.x-8,p.y-12);}
  });
- if(player.dist>1200){player.dist=0;opps.forEach(o=>o.dist-=1200);lap++; if(lap>3){finishRace();}}
- let all=[{dist:player.dist,isMe:true},...opps.map(o=>({dist:o.dist,isMe:false}))];
- all.sort((a,b)=>b.dist-a.dist);
- let myPos=all.findIndex(a=>a.isMe)+1;
- document.getElementById('pos').textContent=myPos+'/4';
- document.getElementById('lap').textContent=lap+'/3';
- document.getElementById('vel').textContent=Math.round(player.speed*18);
- opps.forEach(o=>drawCar(o.x,o.y,o.w,o.h,o.color));
- drawCar(player.x,player.y,player.w,player.h,player.color);
+ // bola
+ ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ball.x,ball.y,6,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#000';ctx.beginPath();ctx.arc(ball.x,ball.y,2,0,Math.PI*2);ctx.fill();
+ // placar
+ let mm=Math.floor(Math.max(0,timeLeft)/60), ss=Math.floor(Math.max(0,timeLeft)%60);
+ document.getElementById('placar').textContent='BRA '+scoreA+' x '+scoreB+' ARG | '+String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0');
 }
-function finishRace(){
- playing=false;
- let all=[player,...opps].sort((a,b)=>b.dist-a.dist);
- let myPos=all.indexOf(player)+1;
- let msg=document.getElementById('msg');
- msg.style.display='block';
- msg.innerHTML=myPos===1?'🏆 VOCÊ VENCEU!':'🏁 Você ficou em '+myPos+'º lugar!';
- document.getElementById('controls').style.display='none';
- setTimeout(()=>{document.getElementById('menu').style.display='flex';document.querySelector('#menu h2').textContent=myPos===1?'VOCÊ VENCEU!':'FIM DA CORRIDA';},2500);
+function bindDpad(){
+ document.querySelectorAll('#dpad button[data-k]').forEach(b=>{
+   let k=b.dataset.k;
+   let on=e=>{e.preventDefault();keys[k]=true;};
+   let off=e=>{e.preventDefault();keys[k]=false;};
+   b.addEventListener('touchstart',on,{passive:false});b.addEventListener('touchend',off);b.addEventListener('mousedown',on);b.addEventListener('mouseup',off);b.addEventListener('mouseleave',off);
+ });
 }
-function bindBtn(id,key){
+bindDpad();
+function doPass(){
+ if(!playing||!ball.owner||ball.owner.team!='A') return;
+ let me=ball.owner;
+ let mates=players.filter(p=>p.team=='A'&&p!==me);
+ mates.sort((a,b)=>Math.hypot(a.x-ball.x,a.y-ball.y)-Math.hypot(b.x-ball.x,b.y-ball.y));
+ let target=mates[0]; if(!target) return;
+ ball.owner=null;
+ let dx=target.x-ball.x, dy=target.y-ball.y, d=Math.hypot(dx,dy)||1;
+ ball.vx=dx/d*7; ball.vy=dy/d*7;
+}
+function doShoot(){
+ if(!playing||!ball.owner||ball.owner.team!='A') return;
+ ball.owner=null;
+ // chuta pro gol de cima
+ let gx=180+(Math.random()-0.5)*100;
+ let dx=gx-ball.x, dy=10-ball.y, d=Math.hypot(dx,dy)||1;
+ ball.vx=dx/d*10; ball.vy=dy/d*10;
+}
+function bindBtn(id,fn){
  let b=document.getElementById(id);
- let on=e=>{e.preventDefault();keys[key]=true;};
- let off=e=>{e.preventDefault();keys[key]=false;};
- b.addEventListener('touchstart',on,{passive:false});
- b.addEventListener('touchend',off);
- b.addEventListener('touchcancel',off);
- b.addEventListener('mousedown',on);
- b.addEventListener('mouseup',off);
- b.addEventListener('mouseleave',off);
+ b.addEventListener('touchstart',e=>{e.preventDefault();fn();},{passive:false});
+ b.addEventListener('click',fn);
 }
-bindBtn('left','left');bindBtn('right','right');bindBtn('gas','gas');bindBtn('brake','brake');
-document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')keys['left']=true;if(e.key==='ArrowRight')keys['right']=true;if(e.key==='ArrowUp')keys['gas']=true;if(e.key==='ArrowDown')keys['brake']=true;});
-document.addEventListener('keyup',e=>{if(e.key==='ArrowLeft')keys['left']=false;if(e.key==='ArrowRight')keys['right']=false;if(e.key==='ArrowUp')keys['gas']=false;if(e.key==='ArrowDown')keys['brake']=false;});
+bindBtn('passBtn',doPass); bindBtn('shootBtn',doShoot);
+let runBtn=document.getElementById('runBtn');
+runBtn.addEventListener('touchstart',e=>{e.preventDefault();keys['run']=true;},{passive:false});
+runBtn.addEventListener('touchend',()=>keys['run']=false);
+runBtn.addEventListener('mousedown',()=>keys['run']=true);
+runBtn.addEventListener('mouseup',()=>keys['run']=false);
+document.addEventListener('keydown',e=>{if(e.key=='ArrowUp')keys['up']=true;if(e.key=='ArrowDown')keys['down']=true;if(e.key=='ArrowLeft')keys['left']=true;if(e.key=='ArrowRight')keys['right']=true;if(e.key==' ')doShoot();if(e.key=='x'||e.key=='X')doPass();});
+document.addEventListener('keyup',e=>{if(e.key=='ArrowUp')keys['up']=false;if(e.key=='ArrowDown')keys['down']=false;if(e.key=='ArrowLeft')keys['left']=false;if(e.key=='ArrowRight')keys['right']=false;});
 loop();
 </script>
 </body>
-</html>
+                                                                                                                                                      </html>
